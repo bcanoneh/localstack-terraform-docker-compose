@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  localstack:
+    container_name: localstack
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"   # Puerto principal para todos los servicios
+      - "4571:4571"   # Puerto interno para debug (opcional)
+    restart: always
+    environment:
+      - SERVICES=s3,sqs,sns,dynamodb  # Puedes agregar más separados por coma: e.g., dynamodb,lambda
+      - DEBUG=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - LOCALSTACK_HOST=localstack
+      - HOSTNAME_EXTERNAL=localhost
+    volumes:
+      # - ./init-localstack.sh:/etc/localstack/init/ready.d/init-localstack.sh
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./localstack:/var/lib/localstack   # (opcional) Persistencia local de datos

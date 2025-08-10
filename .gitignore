@@ -1,0 +1,33 @@
+# Entorno virtual
+.venv/
+env/
+
+localstack/
+
+# Archivos de dependencias locales
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Archivos temporales de LocalStack
+localstack_data/
+.tmp/
+.tmp_localstack/
+
+# Archivos generados por Terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+
+# Archivos de configuración de AWS CLI locales
+.aws/
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de logs
+*.log
+logs/
