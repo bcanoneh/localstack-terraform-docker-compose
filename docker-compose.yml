@@ -5,18 +5,18 @@ services:
     container_name: localstack
     image: localstack/localstack:latest
     ports:
-      - "4566:4566"   # Puerto principal para todos los servicios
-      - "4571:4571"   # Puerto interno para debug (opcional)
+      - "4566:4566"   # Puerto principal
+      - "4571:4571"   # Puerto debug opcional
     restart: always
     environment:
-      - SERVICES=s3,sqs,sns,dynamodb  # Agrega más separados por coma
+      - SERVICES=s3,sqs,sns,dynamodb
       - DEBUG=1
       - DOCKER_HOST=unix:///var/run/docker.sock
       - LOCALSTACK_HOST=localstack
       - HOSTNAME_EXTERNAL=localhost
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./localstack:/var/lib/localstack   # Persistencia local de datos
+      - ./localstack:/var/lib/localstack
 
   terraform:
     image: hashicorp/terraform:1.9
@@ -33,5 +33,5 @@ services:
     entrypoint: >
       sh -c "
         terraform init &&
-        terraform apply -auto-approve
+        terraform apply -auto-approve -var-file=terraform.tfvars
       "

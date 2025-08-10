@@ -8,27 +8,25 @@ terraform {
 }
 
 provider "aws" {
-  region                      = "us-east-1"
+  region                      = var.aws_region
   access_key                  = "test"
   secret_key                  = "test"
   skip_credentials_validation = true
   skip_requesting_account_id  = true
+  s3_use_path_style           = true
 
   endpoints {
-    s3       = "http://localstack:4566"
-    sqs      = "http://localstack:4566"
-    sns      = "http://localstack:4566"
-    dynamodb = "http://localstack:4566"
+    s3       = var.localstack_endpoint
+    sqs      = var.localstack_endpoint
+    sns      = var.localstack_endpoint
+    dynamodb = var.localstack_endpoint
   }
-
-  s3_use_path_style = true
 }
 
-
 resource "aws_s3_bucket" "bucket" {
-  bucket = "my-local-bucket"
+  bucket = var.s3_bucket_name
 }
 
 resource "aws_sqs_queue" "queue" {
-  name = "my-local-queue"
+  name = var.sqs_queue_name
 }
