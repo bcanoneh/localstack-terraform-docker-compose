@@ -31,3 +31,6 @@ Thumbs.db
 # Archivos de logs
 *.log
 logs/
+
+
+*.zip
