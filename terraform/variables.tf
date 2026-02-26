@@ -65,3 +65,40 @@ variable "dynamodb_table_name" {
   type        = string
   description = "Name table to dynamodb"
 }
+
+# Notification eventbridge variables
+variable "sqs_queue_notification_name" {
+  type        = string
+  description = "Name to sqs notification tray"
+}
+
+variable "bus_rule_notification" {
+  type        = string
+  description = "Bus rule"
+  default     = "notification_rule"
+}
+
+
+variable "dynamodb_table_name_notification" {
+  type        = string
+  description = "Name table notification idempotency"
+}
+
+# Notification eventbridge variables
+variable "sqs_queue_notification_tray_name" {
+  type        = string
+  description = "Name to sqs notification tray"
+}
+
+
+variable "bus_rule_notification_tray" {
+  type        = string
+  description = "Bus rule"
+  default     = "notification_tray_rule"
+}
+
+
+variable "dynamodb_table_name_notification_tray" {
+  type        = string
+  description = "Name table notification tray idempotency"
+}

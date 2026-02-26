@@ -331,3 +331,153 @@ resource "aws_dynamodb_table" "owners" {
     type = "S"
   }
 }
+
+
+# Add target and rule to new event notification-tray
+
+
+# Add SQS to nofiticaion-tray
+
+resource "aws_sqs_queue" "notification_tray_sqs" {
+  name = var.sqs_queue_notification_tray_name
+}
+
+resource "aws_cloudwatch_event_rule" "notification_tray_rule" {
+  name           = var.bus_rule_notification_tray
+  description    = "Captura los eventos de la cola de notification tray"
+  event_bus_name = aws_cloudwatch_event_bus.custom_bus.name
+
+  event_pattern = jsonencode({
+    "detail-type" = [
+      "NotificationTrayEvent.NotificationTrayEventMade",
+    ]
+  })
+}
+
+resource "aws_cloudwatch_event_target" "notification_tray_target" {
+  rule           = aws_cloudwatch_event_rule.notification_tray_rule.name
+  event_bus_name = aws_cloudwatch_event_bus.custom_bus.name
+  target_id      = "notification-tray-target"
+  arn            = aws_sqs_queue.notification_tray_sqs.arn
+
+  depends_on = [aws_sqs_queue.notification_tray_sqs, aws_cloudwatch_event_rule.notification_tray_rule]
+}
+
+
+resource "aws_sqs_queue_policy" "notification_tray_queue_policy" {
+  queue_url = aws_sqs_queue.notification_tray_sqs.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect    = "Allow",
+        Principal = { Service = "events.amazonaws.com" },
+        Action    = "sqs:SendMessage",
+        Resource  = aws_sqs_queue.notification_tray_sqs.arn,
+        Condition = {
+          ArnEquals = {
+            "aws:SourceArn" : aws_cloudwatch_event_rule.notification_tray_rule.arn
+          }
+        }
+      }
+    ]
+  })
+}
+
+
+# Add dynamo table to idempotency
+
+resource "aws_dynamodb_table" "notification_tray_idempotency" {
+  name           = var.dynamodb_table_name_notification_tray
+  billing_mode   = "PROVISIONED"
+  read_capacity  = 5
+  write_capacity = 5
+
+  hash_key  = "messageId"
+  range_key = "messageCrc"
+
+  attribute {
+    name = "messageId"
+    type = "S"
+  }
+
+  attribute {
+    name = "messageCrc"
+    type = "S"
+  }
+}
+
+
+# Notification
+
+resource "aws_sqs_queue" "notification_sqs" {
+  name = var.sqs_queue_notification_name
+}
+
+resource "aws_cloudwatch_event_rule" "notification_rule" {
+  name           = var.bus_rule_notification
+  description    = "Captura los eventos de la cola de notification"
+  event_bus_name = aws_cloudwatch_event_bus.custom_bus.name
+
+  event_pattern = jsonencode({
+    "detail-type" = [
+      "NotificationEvent.NotificationEventMade",
+    ]
+  })
+}
+
+resource "aws_cloudwatch_event_target" "notification_target" {
+  rule           = aws_cloudwatch_event_rule.notification_rule.name
+  event_bus_name = aws_cloudwatch_event_bus.custom_bus.name
+  target_id      = "notification-target"
+  arn            = aws_sqs_queue.notification_sqs.arn
+
+  depends_on = [aws_sqs_queue.notification_sqs, aws_cloudwatch_event_rule.notification_rule]
+}
+
+
+resource "aws_sqs_queue_policy" "notification_queue_policy" {
+  queue_url = aws_sqs_queue.notification_sqs.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect    = "Allow",
+        Principal = { Service = "events.amazonaws.com" },
+        Action    = "sqs:SendMessage",
+        Resource  = aws_sqs_queue.notification_sqs.arn,
+        Condition = {
+          ArnEquals = {
+            "aws:SourceArn" : aws_cloudwatch_event_rule.notification_rule.arn
+          }
+        }
+      }
+    ]
+  })
+}
+
+
+# Add dynamo table to idempotency
+
+resource "aws_dynamodb_table" "notification_idempotency" {
+  name           = var.dynamodb_table_name_notification
+  billing_mode   = "PROVISIONED"
+  read_capacity  = 5
+  write_capacity = 5
+
+  hash_key  = "messageId"
+  range_key = "messageCrc"
+
+  attribute {
+    name = "messageId"
+    type = "S"
+  }
+
+  attribute {
+    name = "messageCrc"
+    type = "S"
+  }
+}
+# Notification

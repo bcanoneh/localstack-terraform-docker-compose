@@ -26,3 +26,8 @@ output "lambda_name" {
 #   value = aws_cloudwatch_event_rule.cron_rule.name
 # }
 
+
+
+output "notification_tray_sqs_url" {
+  value = aws_sqs_queue.notification_tray_sqs.id
+}
