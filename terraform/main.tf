@@ -481,3 +481,206 @@ resource "aws_dynamodb_table" "notification_idempotency" {
   }
 }
 # Notification
+
+# SNS Topic
+resource "aws_sns_topic" "notification" {
+  name = "notification"
+}
+
+# SQS Queues
+resource "aws_sqs_queue" "notification" {
+  name = "notification"
+}
+
+# SNS -> SQS Subscription: notification-tray
+resource "aws_sns_topic_subscription" "notification_tray_subscription" {
+  topic_arn = aws_sns_topic.notification.arn
+  protocol  = "sqs"
+  endpoint  = aws_sqs_queue.notification_tray_sqs.arn
+
+  filter_policy = jsonencode({
+    type = ["NotificationTrayEvent.NotificationTrayEventMade"]
+  })
+}
+
+resource "aws_sns_topic_subscription" "notification_subscription" {
+  topic_arn = aws_sns_topic.notification.arn
+  protocol  = "sqs"
+  endpoint  = aws_sqs_queue.notification_sqs.arn
+
+  filter_policy = jsonencode({
+    type = ["NotificationEvent.NotificationEventMade"]
+  })
+}
+
+# SQS Policy for notification-tray to allow SNS to send messages
+resource "aws_sqs_queue_policy" "notification_tray_sns_policy" {
+  queue_url = aws_sqs_queue.notification_tray_sqs.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect    = "Allow",
+        Principal = { Service = "sns.amazonaws.com" },
+        Action    = "sqs:SendMessage",
+        Resource  = aws_sqs_queue.notification_tray_sqs.arn,
+        Condition = {
+          ArnEquals = {
+            "aws:SourceArn" : aws_sns_topic.notification.arn
+          }
+        }
+      }
+    ]
+  })
+}
+
+# SQS Policy for dispatch_notification to allow SNS to send messages
+resource "aws_sqs_queue_policy" "notification_sns_policy" {
+  queue_url = aws_sqs_queue.notification_sqs.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect    = "Allow",
+        Principal = { Service = "sns.amazonaws.com" },
+        Action    = "sqs:SendMessage",
+        Resource  = aws_sqs_queue.notification_sqs.arn,
+        Condition = {
+          ArnEquals = {
+            "aws:SourceArn" : aws_sns_topic.notification.arn
+          }
+        }
+      }
+    ]
+  })
+}
+
+
+# Bucket to notification
+resource "aws_s3_bucket" "temp_notification_attachment_bucket" {
+  bucket = var.temp-notification-attachment
+}
+
+
+resource "aws_s3_object" "temp_notification_attachment_bucket_folders" {
+  for_each = toset([
+    "td-movement-reports/",
+    "affiliation-pos/"
+  ])
+  bucket  = aws_s3_bucket.temp_notification_attachment_bucket.bucket
+  key     = each.value
+  content = ""
+
+  depends_on = [aws_s3_bucket.temp_notification_attachment_bucket]
+}
+
+
+resource "aws_iam_role" "lambda_automation_affiliation" {
+  name = "${var.lambda_automation_affiliation_pos_name}-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Action    = "sts:AssumeRole",
+      Effect    = "Allow",
+      Principal = { Service = "lambda.amazonaws.com" }
+    }]
+  })
+}
+resource "aws_lambda_function" "affiliation_lambda" {
+  function_name = var.lambda_automation_affiliation_pos_name
+  role          = aws_iam_role.lambda_automation_affiliation.arn
+  handler       = "handler.handler"
+  runtime       = "nodejs22.x"
+  timeout       = 60
+
+  filename         = "${path.module}/lambda/handler.zip"
+  source_code_hash = filebase64sha256("${path.module}/lambda/handler.zip")
+
+  environment {
+    variables = merge(
+      {
+        ZIGI_EVENT_BUS_TOPIC_ARN = aws_cloudwatch_event_bus.custom_bus.name,
+
+      },
+      var.lambda_env
+    )
+  }
+}
+
+
+# Dispatch-Notification Add target and rule to new event dispatch-notification
+# Add SQS to dispatch-notification
+resource "aws_sqs_queue" "dispatch_notification_sqs" {
+  name = var.sqs_queue_dispatch_notification_name
+}
+
+resource "aws_cloudwatch_event_rule" "dispatch_notification_rule" {
+  name           = var.bus_rule_dispatch_notification
+  description    = "Captura los eventos de la cola de dispatch notification tray"
+  event_bus_name = aws_cloudwatch_event_bus.custom_bus.name
+
+  event_pattern = jsonencode({
+    "detail-type" = [
+      "DispatchNotification.DispatchNotificationMade",
+    ]
+  })
+}
+
+resource "aws_cloudwatch_event_target" "dispatch_notification_target" {
+  rule           = aws_cloudwatch_event_rule.dispatch_notification_rule.name
+  event_bus_name = aws_cloudwatch_event_bus.custom_bus.name
+  target_id      = "dispatch-notification-target"
+  arn            = aws_sqs_queue.dispatch_notification_sqs.arn
+
+  depends_on = [aws_sqs_queue.dispatch_notification_sqs, aws_cloudwatch_event_rule.dispatch_notification_rule]
+}
+
+
+resource "aws_sqs_queue_policy" "dispatch_notification_queue_policy" {
+  queue_url = aws_sqs_queue.dispatch_notification_sqs.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect    = "Allow",
+        Principal = { Service = "events.amazonaws.com" },
+        Action    = "sqs:SendMessage",
+        Resource  = aws_sqs_queue.dispatch_notification_sqs.arn,
+        Condition = {
+          ArnEquals = {
+            "aws:SourceArn" : aws_cloudwatch_event_rule.dispatch_notification_rule.arn
+          }
+        }
+      }
+    ]
+  })
+}
+
+
+# Add dynamo table to idempotency
+
+resource "aws_dynamodb_table" "dispatch_notification_idempotency" {
+  name           = var.dynamodb_table_name_dispatch_notification
+  billing_mode   = "PROVISIONED"
+  read_capacity  = 5
+  write_capacity = 5
+
+  hash_key  = "messageId"
+  range_key = "messageCrc"
+
+  attribute {
+    name = "messageId"
+    type = "S"
+  }
+
+  attribute {
+    name = "messageCrc"
+    type = "S"
+  }
+}
+
+# Dispatch-Notification End

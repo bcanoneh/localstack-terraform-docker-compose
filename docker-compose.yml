@@ -9,7 +9,9 @@ services:
       - "4571:4571" # Puerto debug opcional
     restart: always
     environment:
-      - SERVICES=s3,sqs,sns,dynamodb,lambda,cloudwatch,iam,logs,events
+      - S3_SKIP_KMS_KEY_VALIDATION=1
+      - LOCALSTACK_AUTH_TOKEN=ls-soPorAVu-PejI-FiwU-7022-votOMoku55a6
+      - SERVICES=s3,sqs,sns,dynamodb,lambda,cloudwatch,iam,logs,events,kms,ses
       - DEBUG=1
       - DOCKER_HOST=unix:///var/run/docker.sock
       - LOCALSTACK_HOST=localstack

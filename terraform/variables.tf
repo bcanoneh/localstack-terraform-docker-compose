@@ -32,6 +32,12 @@ variable "lambda_function_name" {
   description = "Nombre de la lambda"
 }
 
+variable "lambda_automation_affiliation_pos_name" {
+  type        = string
+  description = "Name of affiliation pos lambda"
+  default     = "automation_affiliation_pos"
+}
+
 variable "cron_expression" {
   type        = string
   description = "Expresión CRON para EventBridge"
@@ -102,3 +108,31 @@ variable "dynamodb_table_name_notification_tray" {
   type        = string
   description = "Name table notification tray idempotency"
 }
+
+variable "temp-notification-attachment" {
+  type        = string
+  description = "Name of bucket to temp-notification-attachment"
+  default     = "temp-notification-attachment"
+}
+
+
+# Dispatch-Notification
+# Notification eventbridge variables
+variable "sqs_queue_dispatch_notification_name" {
+  type        = string
+  description = "Name to sqs dispatch notification"
+}
+
+
+variable "bus_rule_dispatch_notification" {
+  type        = string
+  description = "Bus rule"
+  default     = "dispatch_notification_rule"
+}
+
+
+variable "dynamodb_table_name_dispatch_notification" {
+  type        = string
+  description = "Name table dispatch notification idempotency"
+}
+# Dispatch-Notification End

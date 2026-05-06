@@ -9,9 +9,14 @@ lambda_function_name = "eagle-serverless-lambda"
 
 lambda_env = {
   ZIGI_EVENT_BUS_TOPIC_ARN = "eagle-event-bus"
-  BUCKET_NAME              = "eagle-populate-loads"
+  # BUCKET_NAME              = "eagle-populate-loads"
+  BUCKET_NAME              = "temp-notification-attachment"
   BUCKET_FOLDER            = "pending"
   SOME_SECRET              = "12345"
+  BUCKET_TEMP_NOTIFICATION = "temp-notification-attachment"
+  ALB_HOST                 = "host.docker.internal:5200"
+  EMAIL_TO                 = "bcanon@eaglehubs.com"
+  FOLDER_NAME              = "affiliation-pos"
 }
 bus_name                              = "eagle-event-bus"
 bus_rule                              = "monitor-all-events"
@@ -22,3 +27,7 @@ dynamodb_table_name_notification_tray = "notification-tray-idempotency"
 
 sqs_queue_notification_name      = "notification"
 dynamodb_table_name_notification = "notification-idempotency"
+
+
+sqs_queue_dispatch_notification_name      = "dispatch-notification"
+dynamodb_table_name_dispatch_notification = "dispatch-notification-idempotency"
