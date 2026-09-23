@@ -34,3 +34,6 @@ logs/
 
 
 *.zip
+
+*.env
+*.crt

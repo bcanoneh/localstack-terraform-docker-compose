@@ -1,15 +1,20 @@
-version: "3.8"
-
 services:
   localstack:
     container_name: localstack
-    image: localstack/localstack:latest
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.localstack
+    image: localstack/localstack:corp-ca
     ports:
       - "4566:4566" # Puerto principal
       - "4571:4571" # Puerto debug opcional
     restart: always
+    env_file:
+      - .env
     environment:
-      - SERVICES=s3,sqs,sns,dynamodb,lambda,cloudwatch,iam,logs,events
+      - S3_SKIP_KMS_KEY_VALIDATION=1
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN}
+      - SERVICES=s3,sqs,sns,dynamodb,lambda,cloudwatch,iam,logs,events,kms,ses
       - DEBUG=1
       - DOCKER_HOST=unix:///var/run/docker.sock
       - LOCALSTACK_HOST=localstack
@@ -17,9 +22,17 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./localstack:/var/lib/localstack
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   terraform:
-    image: hashicorp/terraform:1.9
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.terraform
+    image: terraform-corp-ca
     container_name: terraform_local
     working_dir: /workspace
     volumes:
@@ -29,7 +42,8 @@ services:
       AWS_SECRET_ACCESS_KEY: test
       AWS_REGION: us-east-1
     depends_on:
-      - localstack
+      localstack:
+        condition: service_healthy
     entrypoint: >
       sh -c "
         terraform init &&

@@ -32,6 +32,12 @@ variable "lambda_function_name" {
   description = "Nombre de la lambda"
 }
 
+variable "lambda_automation_affiliation_pos_name" {
+  type        = string
+  description = "Name of affiliation pos lambda"
+  default     = "automation_affiliation_pos"
+}
+
 variable "cron_expression" {
   type        = string
   description = "Expresión CRON para EventBridge"
@@ -46,6 +52,12 @@ variable "bucket_folder" {
 variable "lambda_env" {
   type        = map(string)
   description = "Variables de entorno para la Lambda"
+  default     = {}
+}
+
+variable "lambda_query_commands_backoffice_env" {
+  type        = map(string)
+  description = "Variables de entorno para la Lambda de query commands for backoffice"
   default     = {}
 }
 
@@ -101,4 +113,59 @@ variable "bus_rule_notification_tray" {
 variable "dynamodb_table_name_notification_tray" {
   type        = string
   description = "Name table notification tray idempotency"
+}
+
+variable "temp-notification-attachment" {
+  type        = string
+  description = "Name of bucket to temp-notification-attachment"
+  default     = "temp-notification-attachment"
+}
+
+
+# Dispatch-Notification
+# Notification eventbridge variables
+variable "sqs_queue_dispatch_notification_name" {
+  type        = string
+  description = "Name to sqs dispatch notification"
+}
+
+
+variable "bus_rule_dispatch_notification" {
+  type        = string
+  description = "Bus rule"
+  default     = "dispatch_notification_rule"
+}
+
+
+variable "dynamodb_table_name_dispatch_notification" {
+  type        = string
+  description = "Name table dispatch notification idempotency"
+}
+# Dispatch-Notification End
+
+
+variable "lambda_query_commands_for_backoffice_name" {
+  type        = string
+  description = "Name of affiliation pos lambda"
+  default     = "lambda_query_commands_for_backoffice"
+}
+
+
+# Dynamodb transaction-idempotency
+variable "dynamodb_table_name_transaction_idempotency" {
+  type        = string
+  description = "Name table transaction idempotency"
+}
+
+
+# External dispersion
+variable "dynamodb_table_name_external_dispersion" {
+  type        = string
+  description = "Name table external dispersion sqs idempotence"
+}
+
+
+variable "sqs_queue_external_dispersion_name" {
+  type        = string
+  description = "Name to sqs external dispersion"
 }
