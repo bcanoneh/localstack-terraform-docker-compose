@@ -684,3 +684,92 @@ resource "aws_dynamodb_table" "dispatch_notification_idempotency" {
 }
 
 # Dispatch-Notification End
+
+
+# Lambda to query-commands-for-backoffice
+resource "aws_lambda_function" "query_commands_for_backoffice_lambda" {
+  function_name = var.lambda_query_commands_for_backoffice_name
+  role          = aws_iam_role.lambda_query_commands_for_backoffice_iam.arn
+  handler       = "handler.handler"
+  runtime       = "nodejs22.x"
+  timeout       = 60
+
+  filename         = "${path.module}/lambda/query-commands/handler.zip"
+  source_code_hash = filebase64sha256("${path.module}/lambda/query-commands/handler.zip")
+
+  environment {
+    variables = merge(
+      {
+        ZIGI_EVENT_BUS_TOPIC_ARN = aws_cloudwatch_event_bus.custom_bus.name,
+
+      },
+      var.lambda_query_commands_backoffice_env
+    )
+  }
+}
+
+resource "aws_iam_role" "lambda_query_commands_for_backoffice_iam" {
+  name = "${var.lambda_query_commands_for_backoffice_name}-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Action    = "sts:AssumeRole",
+      Effect    = "Allow",
+      Principal = { Service = "lambda.amazonaws.com" }
+    }]
+  })
+}
+# Lambda to query-commands-for-backoffice
+
+
+
+# Add dynamo table to idempotency
+
+resource "aws_dynamodb_table" "transaction_idempotency" {
+  name           = var.dynamodb_table_name_transaction_idempotency
+  billing_mode   = "PROVISIONED"
+  read_capacity  = 5
+  write_capacity = 5
+
+  hash_key  = "messageId"
+  range_key = "messageCrc"
+
+  attribute {
+    name = "messageId"
+    type = "S"
+  }
+
+  attribute {
+    name = "messageCrc"
+    type = "S"
+  }
+}
+
+
+# External dispersion table dynamodb and sqs queue
+resource "aws_dynamodb_table" "external_dispersion" {
+  name           = var.dynamodb_table_name_external_dispersion
+  billing_mode   = "PROVISIONED"
+  read_capacity  = 5
+  write_capacity = 5
+
+  hash_key  = "messageId"
+  range_key = "messageCrc"
+
+  attribute {
+    name = "messageId"
+    type = "S"
+  }
+
+  attribute {
+    name = "messageCrc"
+    type = "S"
+  }
+}
+
+
+resource "aws_sqs_queue" "external_dispersion_sqs" {
+  name = var.sqs_queue_external_dispersion_name
+}
+# External dispersion table dynamodb and sqs queue

@@ -18,6 +18,13 @@ lambda_env = {
   EMAIL_TO                 = "bcanon@eaglehubs.com"
   FOLDER_NAME              = "affiliation-pos"
 }
+
+
+lambda_query_commands_backoffice_env = {
+  ALB_HOST = "host.docker.internal:5200"
+}
+
+
 bus_name                              = "eagle-event-bus"
 bus_rule                              = "monitor-all-events"
 dynamodb_table_name                   = "merchant-idempotency"
@@ -31,3 +38,10 @@ dynamodb_table_name_notification = "notification-idempotency"
 
 sqs_queue_dispatch_notification_name      = "dispatch-notification"
 dynamodb_table_name_dispatch_notification = "dispatch-notification-idempotency"
+
+
+dynamodb_table_name_transaction_idempotency = "transaction-idempotency"
+
+# Dispersion
+dynamodb_table_name_external_dispersion = "external-dispersion-idempotency"
+sqs_queue_external_dispersion_name      = "external_dispersion"

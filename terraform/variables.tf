@@ -55,6 +55,12 @@ variable "lambda_env" {
   default     = {}
 }
 
+variable "lambda_query_commands_backoffice_env" {
+  type        = map(string)
+  description = "Variables de entorno para la Lambda de query commands for backoffice"
+  default     = {}
+}
+
 variable "bus_name" {
   type        = string
   description = "Event bus name"
@@ -136,3 +142,30 @@ variable "dynamodb_table_name_dispatch_notification" {
   description = "Name table dispatch notification idempotency"
 }
 # Dispatch-Notification End
+
+
+variable "lambda_query_commands_for_backoffice_name" {
+  type        = string
+  description = "Name of affiliation pos lambda"
+  default     = "lambda_query_commands_for_backoffice"
+}
+
+
+# Dynamodb transaction-idempotency
+variable "dynamodb_table_name_transaction_idempotency" {
+  type        = string
+  description = "Name table transaction idempotency"
+}
+
+
+# External dispersion
+variable "dynamodb_table_name_external_dispersion" {
+  type        = string
+  description = "Name table external dispersion sqs idempotence"
+}
+
+
+variable "sqs_queue_external_dispersion_name" {
+  type        = string
+  description = "Name to sqs external dispersion"
+}

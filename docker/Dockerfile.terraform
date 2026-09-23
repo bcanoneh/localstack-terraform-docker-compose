@@ -1,0 +1,4 @@
+FROM hashicorp/terraform:1.9
+COPY corp-ca.crt /usr/local/share/ca-certificates/corp-ca.crt
+RUN update-ca-certificates
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
